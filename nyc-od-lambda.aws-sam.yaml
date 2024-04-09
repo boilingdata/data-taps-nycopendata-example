@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform:
+  - AWS::Serverless-2016-10-31
+Description: NYC OpenData Lambda API poller
+
+Parameters:
+  bdUsername:
+    Type: String
+    Description: BoilingData account username
+  bdPassword:
+    Type: String
+    Description: BoilingData account password
+  bdTapUrl:
+    Type: String
+    Description: Data Tap URL you want to send the data to
+  nycodApiKey:
+    Type: String
+    Description: NYC OpenData API Key id
+  nycodApiSecret:
+    Type: String
+    Description: NYC OpenData API Secret key
+  nycodAppToken:
+    Type: String
+    Description: NYC OpenData App Token
+
+Resources:
+  nycOpenDataLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/datataps/${AWS::StackName}-nyc-open-data
+      RetentionInDays: 3
+
+  nycOpenDataLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: dist/
+      MemorySize: 256
+      Timeout: 120
+      Handler: index.handler
+      Runtime: nodejs20.x
+      Architectures:
+        - arm64
+      LoggingConfig:
+        ApplicationLogLevel: INFO
+        LogFormat: JSON
+        LogGroup: !Ref nycOpenDataLogGroup
+        SystemLogLevel: INFO
+      Environment:
+        Variables:
+          TAP_URL: !Ref bdTapUrl
+          BD_USERNAME: !Ref bdUsername
+          BD_PASSWORD: !Ref bdPassword
+          NYCOD_USERNAME: !Ref nycodApiKey
+          NYCOD_PASSWORD: !Ref nycodApiSecret
+          NYCOD_APPTOKEN: !Ref nycodAppToken
+      Policies:
+        - Statement:
+            - Action:
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+                - logs:DescribeLogGroups
+                - logs:DescribeLogStreams
+              Resource:
+                - '*'
+              Effect: Allow
+      ReservedConcurrentExecutions: 1
+
+  schedulerRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Trigger API ingestion to Data Tap hourly
+      ScheduleExpression: "rate(1 hour)"
+      State: "ENABLED"
+      Targets:
+        -
+          Arn: !GetAtt nycOpenDataLambda.Arn
+          Id: checkNoSessionLambdaTargetId
+
+  schedulerPermission:
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: !Ref nycOpenDataLambda
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt schedulerRule.Arn

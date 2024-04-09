@@ -1,0 +1,20 @@
+{
+  "name": "data-taps-nycopendata-example",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "author": "Dan Forsberg <dan@boilingdata.com>",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "build": "ncc build -m -o dist/ src/index.js",
+    "deploy": "sam validate && sam package && sam deploy --parameter-overrides ParameterKey=bdUsername,ParameterValue=${BD_USERNAME} ParameterKey=bdPassword,ParameterValue=${BD_PASSWORD} ParameterKey=bdTapUrl,ParameterValue=${BD_TAP_URL} ParameterKey=nycodApiKey,ParameterValue=${NYCOD_USERNAME} ParameterKey=nycodApiSecret,ParameterValue=${NYCOD_PASSWORD} ParameterKey=nycodAppToken,ParameterValue=${NYCOD_APPTOKEN}"
+  },
+  "dependencies": {
+    "@boilingdata/node-boilingdata": "^1.0.23",
+    "async-retry": "^1.3.3",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.38.1"
+  }
+}
