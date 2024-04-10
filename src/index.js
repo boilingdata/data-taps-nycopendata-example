@@ -53,8 +53,9 @@ export default handler = async (event, context) => {
     offset += limit;
   } while (looping(apiBatch, context, limit, maxRecords));
 
-  // TODO: Persist timestamp and offset to SSM
-  // NOTE: timestamp and offset are a pair, they can't be separated. Also, the timestamp
+  // TODO: Persist timestamp and offset to AWS Parameter Store with putSSMParamString() once code
+  //       is improved to be able to continue from correct offset again.
+  // TODO: timestamp and offset are a pair, they can't be separated. Also, the timestamp
   //       should be probably reset to the latest (unique) one and offset set to 0.
   return recordsTotal;
 };
