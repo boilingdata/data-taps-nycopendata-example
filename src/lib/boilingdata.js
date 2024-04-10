@@ -4,7 +4,7 @@ import * as fs from "fs/promises";
 import jwt from "jsonwebtoken";
 import { BoilingData } from "@boilingdata/node-boilingdata";
 
-const TAP_TOKEN_FILE = "/tmp/.taptoken";
+const TAP_TOKEN_FILE = ".taptoken"; // fix this
 const bd_username = process.env["BD_USERNAME"];
 const bd_password = process.env["BD_PASSWORD"];
 const bd_tapTokenUrl = process.env["TAP_URL"];
