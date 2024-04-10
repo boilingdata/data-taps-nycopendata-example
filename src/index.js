@@ -3,12 +3,14 @@ import fetch from "node-fetch";
 import aretry from "async-retry";
 import { BoilingData } from "@boilingdata/node-boilingdata";
 
-const nycod_username = process.env["NYCOD_USERNAME"];
-const nycod_password = process.env["NYCOD_PASSWORD"];
-const nycod_appToken = process.env["NYCOD_APPTOKEN"];
-const nycod_auth = `Basic ${Buffer.from(`${nycod_username}:${nycod_password}`).toString("base64")}`;
-const nycod_url = "https://data.seattle.gov/resource/jguv-t9rb.json";
-const query = "?$query=SELECT%20*%20WHERE%20Species%20NOT%20IN%20(%27Cat%27%2C%20%27Dog%27)";
+const soda_username = process.env["SODA_USERNAME"];
+const soda_password = process.env["SODA_PASSWORD"];
+const soda_appToken = process.env["SODA_APPTOKEN"];
+const soda_auth = `Basic ${Buffer.from(`${soda_username}:${soda_password}`).toString("base64")}`;
+// "Housing Maintenance Code Complaints and Problems"
+// https://dev.socrata.com/foundry/data.cityofnewyork.us/ygpa-z7cr
+const soda_url = "https://data.cityofnewyork.us/resource/ygpa-z7cr.json";
+const query = "?received_date=2017-08-01T03:42:04.000";
 
 const bd_tapTokenUrl = process.env["TAP_URL"];
 const bd_Instance = new BoilingData({ username: process.env["BD_USERNAME"], password: process.env["BD_PASSWORD"] });
@@ -20,9 +22,9 @@ function getRetryPolicy(retries) {
 
 async function getNYCOpenData() {
   return await aretry(async (_bail) => {
-    const res = await fetch(nycod_url + query, {
+    const res = await fetch(soda_url + query, {
       method: "GET",
-      headers: { "X-App-Token": nycod_appToken, Authorization: nycod_auth },
+      headers: { "X-App-Token": soda_appToken, Authorization: soda_auth },
     });
     const data = await res.text();
     const rows = JSON.parse(data)

@@ -6,8 +6,9 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
+    "test": "node src/index.js",
     "build": "ncc build -m -o dist/ src/index.js",
-    "deploy": "sam validate && sam package && sam deploy --parameter-overrides ParameterKey=bdUsername,ParameterValue=${BD_USERNAME} ParameterKey=bdPassword,ParameterValue=${BD_PASSWORD} ParameterKey=bdTapUrl,ParameterValue=${BD_TAP_URL} ParameterKey=nycodApiKey,ParameterValue=${NYCOD_USERNAME} ParameterKey=nycodApiSecret,ParameterValue=${NYCOD_PASSWORD} ParameterKey=nycodAppToken,ParameterValue=${NYCOD_APPTOKEN}"
+    "deploy": "sam validate && sam package && sam deploy --parameter-overrides ParameterKey=bdUsername,ParameterValue=${BD_USERNAME} ParameterKey=bdPassword,ParameterValue=${BD_PASSWORD} ParameterKey=bdTapUrl,ParameterValue=${BD_TAPURL} ParameterKey=nycodApiKey,ParameterValue=${SODA_USERNAME} ParameterKey=nycodApiSecret,ParameterValue=${SODA_PASSWORD} ParameterKey=nycodAppToken,ParameterValue=${SODA_APPTOKEN}"
   },
   "dependencies": {
     "@boilingdata/node-boilingdata": "^1.0.23",
