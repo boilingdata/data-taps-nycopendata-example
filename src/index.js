@@ -4,10 +4,10 @@ import { getSSMParamString } from "./lib/ssm";
 import { sendToDataTap } from "./lib/boilingdata";
 import { getNYCOpenData } from "./lib/socrates_data_api";
 
-// Source: API (socrates_data_api.js)
-//   Sink: Data Tap (boilingdata.js)
+// Source: REST API (socrates_data_api.js)
+//   Sink: S3 through Data Tap (boilingdata.js)
 
-const WAIT_TIME_MS = 200; // don't bomard APIs, wait time (ms) between calls
+const WAIT_TIME_MS = 200; // don't bomard source API, wait time (ms) between calls
 const SSM_OFFSET = "/datataps/nyc-open-data/offsetPair";
 const AWS_REGION = process.env["AWS_DEFAULT_REGION"] ?? process.env["AWS_REGION"] ?? "eu-west-1";
 const ssmCli = new SSMClient({ region: AWS_REGION });
