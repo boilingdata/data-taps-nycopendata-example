@@ -7,6 +7,7 @@ import { getNYCOpenData } from "./lib/socrates_data_api";
 // Source: API (socrates_data_api.js)
 //   Sink: Data Tap (boilingdata.js)
 
+const WAIT_TIME_MS = 200; // don't bomard APIs, wait time (ms) between calls
 const SSM_OFFSET = "/datataps/nyc-open-data/offsetPair";
 const AWS_REGION = process.env["AWS_DEFAULT_REGION"] ?? process.env["AWS_REGION"] ?? "eu-west-1";
 const ssmCli = new SSMClient({ region: AWS_REGION });
@@ -40,8 +41,6 @@ export default handler = async (event, context) => {
   do {
     const soda_query = getSodaQueryParams(limit, offset, `received_date>='${START}'`, "received_date");
     apiBatch = await getNYCOpenData(soda_query);
-    // don't bombard the API!
-    await new Promise((resolve) => setTimeout(resolve(), 200));
     if (apiBatch?.error || apiBatch?.errorCode) {
       console.error(apiBatch);
       throw new Error(apiBatch);
@@ -49,7 +48,11 @@ export default handler = async (event, context) => {
     console.log({ receivedApiBatchSize: apiBatch?.length });
     recordsTotal += apiBatch.length;
     const ndjson = apiBatch?.map((r) => JSON.stringify(r)).join("\n");
-    const dataTapResponse = await sendToDataTap(ndjson);
+    // Spend at least WAIT_TIME_MS on this to avoid bombarding the source API too hard
+    const [dataTapResponse, _] = await Promise.all([
+      sendToDataTap(ndjson),
+      new Promise((resolve) => setTimeout(resolve(), WAIT_TIME_MS)),
+    ]);
     console.log({ dataTapResponse });
     offset += limit;
   } while (
@@ -61,6 +64,7 @@ export default handler = async (event, context) => {
       (context.getRemainingTimeInMillis && context.getRemainingTimeInMillis() > 5000))
   );
   // TODO: Persist timestamp and offset to SSM
-  // NOTE: timestamp and offset are a pair, they can't be separated
+  // NOTE: timestamp and offset are a pair, they can't be separated. Also, the timestamp
+  //       should be probably reset to the latest (unique) one and offset set to 0.
   return recordsTotal;
 };
