@@ -1,6 +1,5 @@
 import fetch from "node-fetch";
 import aretry from "async-retry";
-import { getRetryPolicy } from "./util";
 
 // "NYC Housing Maintenance Code Complaints and Problems"
 // https://dev.socrata.com/foundry/data.cityofnewyork.us/ygpa-z7cr
@@ -21,13 +20,16 @@ export function getSodaQueryParams(limit = 1000, offset = 0, filter = "", order 
 
 export async function getNYCOpenData(query) {
   try {
-    return await aretry(async (_bail) => {
-      const res = await fetch(soda_url + query, {
-        method: "GET",
-        headers: { "X-App-Token": soda_appToken, Authorization: soda_auth },
-      });
-      return await res.json();
-    }, getRetryPolicy(3));
+    return await aretry(
+      async (_bail) => {
+        const res = await fetch(soda_url + query, {
+          method: "GET",
+          headers: { "X-App-Token": soda_appToken, Authorization: soda_auth },
+        });
+        return await res.json();
+      },
+      { retries: 3 }
+    );
   } catch (err) {
     console.error({ getNYCOpenDataError: err });
   }

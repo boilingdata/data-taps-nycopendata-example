@@ -3,7 +3,6 @@ import aretry from "async-retry";
 import * as fs from "fs/promises";
 import jwt from "jsonwebtoken";
 import { BoilingData } from "@boilingdata/node-boilingdata";
-import { getRetryPolicy } from "./util";
 
 const TAP_TOKEN_FILE = "/tmp/.taptoken";
 const bd_username = process.env["BD_USERNAME"];
@@ -29,15 +28,18 @@ async function getValidTapToken(fetch = true) {
 
 export async function sendToDataTap(rows) {
   const bd_tapClientToken = Buffer.from(await getValidTapToken()).toString("utf8");
-  return await aretry(async (_bail) => {
-    const res = await fetch(bd_tapTokenUrl, {
-      method: "POST",
-      headers: {
-        "x-bd-authorizatoin": bd_tapClientToken,
-        "Content-Type": "application/x-ndjson",
-      },
-      body: JSON.stringify(rows),
-    });
-    return await res.json();
-  }, getRetryPolicy(3));
+  return await aretry(
+    async (_bail) => {
+      const res = await fetch(bd_tapTokenUrl, {
+        method: "POST",
+        headers: {
+          "x-bd-authorizatoin": bd_tapClientToken,
+          "Content-Type": "application/x-ndjson",
+        },
+        body: JSON.stringify(rows),
+      });
+      return await res.json();
+    },
+    { retries: 5 }
+  );
 }
