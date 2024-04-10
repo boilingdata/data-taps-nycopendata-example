@@ -13,6 +13,7 @@
   "dependencies": {
     "@boilingdata/node-boilingdata": "^1.0.23",
     "async-retry": "^1.3.3",
+    "jsonwebtoken": "^9.0.2",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
