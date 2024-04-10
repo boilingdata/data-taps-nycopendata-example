@@ -22,8 +22,23 @@ Parameters:
   nycodAppToken:
     Type: String
     Description: NYC OpenData App Token
+  nycodTrimTimestamp:
+    Type: String
+    Description: NYC OpenData API starting trim horizon timestamp
+    Default: "2024-04-01T00:00:00.00"
+  nycodOffset:
+    Type: String
+    Description: NYC OpenData API starting offset
+    Default: "0"
 
 Resources:
+  nycOpenDataOffsetParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: String
+      Name: /datataps/nyc-open-data/offsetPair
+      Value: !Ref nycodOffset
+
   nycOpenDataLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -62,6 +77,12 @@ Resources:
                 - logs:DescribeLogStreams
               Resource:
                 - '*'
+              Effect: Allow
+            - Action:
+                - ssm:PutParameter*
+                - ssm:GetParameter*
+              Resource: 
+                - !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/parameterStoreExample*'
               Effect: Allow
       ReservedConcurrentExecutions: 1
 

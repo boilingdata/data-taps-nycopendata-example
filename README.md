@@ -10,16 +10,35 @@ This example illustrates how a scheduled AWS Lambda function can fetch new data 
 
 > **NOTE** The code does not (yet) fetch the new results since last fetch, but the same results.
 
-You need a Data Tap on your AWS Account. You can follow these instructions: https://github.com/boilingdata/data-taps-template/tree/main/aws_sam_template. Export the Tap URL as `BD_TAP_URL` environment variable.
+- You need a Data Tap on your AWS Account. You can follow these instructions: https://github.com/boilingdata/data-taps-template/tree/main/aws_sam_template. Export the Tap URL as `BD_TAP_URL` environment variable.
+- You need [Socrates Data API access](https://data.cityofnewyork.us/profile/edit/developer_settings). This API hosts e.g. the NYC Open Data data sets and many others.
 
 ```shell
+cat .env
 export BD_TAPURL=deployedDataTapUrl
 export BD_USERNAME=yourBoilingUsername
 export BD_PASSWORD=yourBoilingPassword
 export SODA_USERNAME=socrataOpenDataAPIKeyId
 export SODA_PASSWORD=socrataOpenDataSecretKey
 export SODA_APPTOKEN=socrataOpenDataAppToken
+```
+
+```shell
+source .env && yarn test
 # The envs will be given as parameters for the stack deployment
 yarn build
 yarn deploy
+```
+
+## Event
+
+AWS Lambda invoke (event) paramters can be used to select what data to fetch.
+
+```json
+{
+  "startTimestamp": "2024-04-01T00:00:00.00",
+  "limit": 1000,
+  "offset": 0,
+  "maxRecords": 2000
+}
 ```
