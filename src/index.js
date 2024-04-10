@@ -1,57 +1,15 @@
-import fetch from "node-fetch";
-import aretry from "async-retry";
 import { getSodaQueryParams } from "./socrates_data_api";
 import { SSMClient } from "@aws-sdk/client-ssm"; // ES Modules import
 import { getSSMParamString } from "./ssm";
-import { getRetryPolicy } from "./util";
-import { getValidTapToken } from "./boilingdata";
+import { sendToDataTap } from "./boilingdata";
+import { getNYCOpenData } from "./socrates_data_api";
 
-// Source: API
-// "NYC Housing Maintenance Code Complaints and Problems"
-// https://dev.socrata.com/foundry/data.cityofnewyork.us/ygpa-z7cr
-const soda_url = "https://data.cityofnewyork.us/resource/ygpa-z7cr.json";
-const soda_username = process.env["SODA_USERNAME"];
-const soda_password = process.env["SODA_PASSWORD"];
-const soda_appToken = process.env["SODA_APPTOKEN"];
-const soda_auth = `Basic ${Buffer.from(`${soda_username}:${soda_password}`).toString("base64")}`;
-
-// Sink: Data Tap
-// Tap token is auth token for sending data to the Tap.
-// bd_tapowner is ourselves, since it is our own Data Tap.
-const bd_tapTokenUrl = process.env["TAP_URL"];
+// Source: API (socrates_data_api.js)
+//   Sink: Data Tap (boilingdata.js)
 
 const SSM_OFFSET = "/datataps/nyc-open-data/offsetPair";
 const AWS_REGION = process.env["AWS_DEFAULT_REGION"] ?? process.env["AWS_REGION"] ?? "eu-west-1";
 const ssmCli = new SSMClient({ region: AWS_REGION });
-
-async function getNYCOpenData(query) {
-  try {
-    return await aretry(async (_bail) => {
-      const res = await fetch(soda_url + query, {
-        method: "GET",
-        headers: { "X-App-Token": soda_appToken, Authorization: soda_auth },
-      });
-      return await res.json();
-    }, getRetryPolicy(3));
-  } catch (err) {
-    console.error({ getNYCOpenDataError: err });
-  }
-}
-
-async function sendToDataTap(rows) {
-  const bd_tapClientToken = Buffer.from(await getValidTapToken()).toString("utf8");
-  return await aretry(async (_bail) => {
-    const res = await fetch(bd_tapTokenUrl, {
-      method: "POST",
-      headers: {
-        "x-bd-authorizatoin": bd_tapClientToken,
-        "Content-Type": "application/x-ndjson",
-      },
-      body: JSON.stringify(rows),
-    });
-    return await res.json();
-  }, getRetryPolicy(3));
-}
 
 export default handler = async (event, context) => {
   console.log({ event });
