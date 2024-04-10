@@ -10,35 +10,28 @@ import { getNYCOpenData } from "./lib/socrates_data_api";
 const sleep = (waitMs) => new Promise((resolve) => setTimeout(resolve(), waitMs));
 let recordsTotal = 0;
 const WAIT_TIME_MS = 200; // don't bomard source API, wait time (ms) between calls
+const MAX_RECORDS = process.env["MAX_RECORDS"];
 const SSM_OFFSET = "/datataps/nyc-open-data/offsetPair";
 const AWS_REGION = process.env["AWS_DEFAULT_REGION"] ?? process.env["AWS_REGION"] ?? "eu-west-1";
 const ssmCli = new SSMClient({ region: AWS_REGION });
 
 async function getParams(event) {
-  // store last ingestion point by using SSM Parameter Store
-  const def = '{"startTimeStamp":"2024-04-01T00:00:00.00","startOffset":"0"}';
+  const defTs = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().substring(0, 11) + "00:00:00.00";
+  const def = `{"startTimeStamp":"${defTs}","startOffset":"0"}`;
   const offsetPair = JSON.parse((await getSSMParamString(ssmCli, SSM_OFFSET)) ?? def);
-  const startTimestamp =
-    event?.startTimestamp ??
-    offsetPair?.startTimestamp ??
-    new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().substring(0, 11) + "00:00:00.00"; // 1 week back
-  const maxRecords = event?.maxRecords ? event.maxRecords : 5000;
+  const startTimestamp = event?.startTimestamp ?? offsetPair?.startTimestamp ?? def;
+  const maxRecords = event?.maxRecords ?? MAX_RECORDS ?? 5000;
   const limit = event?.limit ?? 1000; // batch size
   let offset = event?.offset ?? offsetPair?.offset ?? "0";
-  console.log({
-    apiStartTimestamp: startTimestamp,
-    apiStartOffset: offset,
-    apiBatchLimit: limit,
-    maxRecordsToProcess: maxRecords,
-  });
-  return { startTimestamp, limit, offset, maxRecords };
+  const retParams = { startTimestamp, offset, limit, maxRecords };
+  console.log(retParams);
+  return retParams;
 }
 
 function ensureEnoughTime(limit, context) {
   if (!context || !context?.getRemainingTimeInMillis) return true; // testing, not Lambda
   const remainingMs = context.getRemainingTimeInMillis();
-  if (remainingMs < limit) throw new Error("Less than ${limit/1000} seconds, not enough (check AWS Lambda timeout)");
-  return true;
+  return remainingMs < limit;
 }
 
 function looping(batch, context, limit, maxRecords) {
@@ -48,7 +41,7 @@ function looping(batch, context, limit, maxRecords) {
 
 export default handler = async (event, context) => {
   console.log({ event });
-  ensureEnoughTime(30_000, context);
+  if (!ensureEnoughTime(30_000, context)) throw new Error("AWS Lambda timeout must be at least 30s");
   let apiBatch = [];
   let { startTimestamp, limit, offset, maxRecords } = await getParams(event);
 
