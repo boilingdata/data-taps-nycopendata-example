@@ -1,8 +1,8 @@
-import { getSodaQueryParams } from "./socrates_data_api";
+import { getSodaQueryParams } from "./lib/socrates_data_api";
 import { SSMClient } from "@aws-sdk/client-ssm"; // ES Modules import
-import { getSSMParamString } from "./ssm";
-import { sendToDataTap } from "./boilingdata";
-import { getNYCOpenData } from "./socrates_data_api";
+import { getSSMParamString } from "./lib/ssm";
+import { sendToDataTap } from "./lib/boilingdata";
+import { getNYCOpenData } from "./lib/socrates_data_api";
 
 // Source: API (socrates_data_api.js)
 //   Sink: Data Tap (boilingdata.js)
