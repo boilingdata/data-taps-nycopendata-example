@@ -31,7 +31,10 @@ export async function getNYCOpenData(limit, offset, startTimestamp) {
       },
       { retries: 3 }
     );
-    if (res?.error || res?.errorCode) throw new Error(res);
+    if (res?.error || res?.errorCode) {
+      console.error(res);
+      throw new Error(res);
+    }
     return res;
   } catch (err) {
     console.error({ getNYCOpenDataError: err });
