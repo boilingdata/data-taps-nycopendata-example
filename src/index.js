@@ -21,11 +21,9 @@ async function getParams(event) {
   const offsetPair = JSON.parse((await getSSMParamString(ssmCli, SSM_OFFSET)) ?? def);
   const startTimestamp = event?.startTimestamp ?? offsetPair?.startTimestamp ?? def;
   const maxRecords = event?.maxRecords ?? MAX_RECORDS ?? 5000;
-  const limit = event?.limit ?? 1000; // batch size
-  let offset = event?.offset ?? offsetPair?.offset ?? "0";
-  const retParams = { startTimestamp, offset, limit, maxRecords };
-  console.log(retParams);
-  return retParams;
+  const limit = event?.limit ?? 1000; // batch size from API
+  const offset = event?.offset ?? offsetPair?.offset ?? "0";
+  return { startTimestamp, offset, limit, maxRecords };
 }
 
 function ensureEnoughTime(limit, context) {
@@ -44,15 +42,13 @@ export default handler = async (event, context) => {
   if (!ensureEnoughTime(30_000, context)) throw new Error("AWS Lambda timeout must be at least 30s");
   let apiBatch = [];
   let { startTimestamp, limit, offset, maxRecords } = await getParams(event);
+  console.log({ startTimestamp, limit, offset, maxRecords });
 
   do {
-    const soda_query = getSodaQueryParams(limit, offset, `received_date>='${startTimestamp}'`, "received_date");
-    apiBatch = await getNYCOpenData(soda_query);
-    if (apiBatch?.error || apiBatch?.errorCode) throw new Error(apiBatch);
+    apiBatch = await getNYCOpenData(limit, offset, startTimestamp);
     console.log({ receivedApiBatchSize: apiBatch?.length });
-    const ndjson = apiBatch?.map((r) => JSON.stringify(r)).join("\n");
     // Spend at least WAIT_TIME_MS here to avoid bombarding the source API too hard
-    const [dataTapResponse, _] = await Promise.all([sendToDataTap(ndjson), sleep(WAIT_TIME_MS)]);
+    const [dataTapResponse, _] = await Promise.all([sendToDataTap(apiBatch), sleep(WAIT_TIME_MS)]);
     console.log({ dataTapResponse });
     offset += limit;
   } while (looping(apiBatch, context, limit, maxRecords));

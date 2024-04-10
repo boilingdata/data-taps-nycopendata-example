@@ -7,8 +7,8 @@ import { BoilingData } from "@boilingdata/node-boilingdata";
 const TAP_TOKEN_FILE = "/tmp/.taptoken";
 const bd_username = process.env["BD_USERNAME"];
 const bd_password = process.env["BD_PASSWORD"];
-const bd_tapowner = bd_username;
 const bd_tapTokenUrl = process.env["TAP_URL"];
+const bd_tapowner = bd_username;
 
 async function getValidTapToken(fetch = true) {
   try {
@@ -17,7 +17,7 @@ async function getValidTapToken(fetch = true) {
     if (decoded.exp * 1000 - 60 * 1000 <= Date.now()) throw new Error("Expired local JWT token");
     return jwtToken;
   } catch (err) {
-    // expired or local cached file not exists
+    // expired or local cached file not exists or corrupted
     if (!fetch) throw err;
     const bd_Instance = new BoilingData({ username: bd_username, password: bd_password });
     const bd_tapClientToken = await bd_Instance.getTapClientToken("24h", bd_tapowner);
@@ -27,18 +27,15 @@ async function getValidTapToken(fetch = true) {
 }
 
 export async function sendToDataTap(rows) {
-  const bd_tapClientToken = Buffer.from(await getValidTapToken()).toString("utf8");
+  const body = rows?.map((r) => JSON.stringify(r)).join("\n"); // newline JSON
+  const token = Buffer.from(await getValidTapToken()).toString("utf8");
   return await aretry(
-    async (_bail) => {
-      const res = await fetch(bd_tapTokenUrl, {
-        method: "POST",
-        headers: {
-          "x-bd-authorizatoin": bd_tapClientToken,
-          "Content-Type": "application/x-ndjson",
-        },
-        body: JSON.stringify(rows),
-      });
-      return await res.json();
+    async (bail) => {
+      const headers = { "x-bd-authorizatoin": token, "Content-Type": "application/x-ndjson" };
+      const res = await fetch(bd_tapTokenUrl, { method: "POST", headers, body });
+      const jsonRes = await res.json();
+      if (jsonRes?.statusCode == 403) bail("Unauthorized");
+      return jsonRes;
     },
     { retries: 5 }
   );

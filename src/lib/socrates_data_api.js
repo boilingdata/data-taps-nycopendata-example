@@ -18,11 +18,12 @@ export function getSodaQueryParams(limit = 1000, offset = 0, filter = "", order 
   );
 }
 
-export async function getNYCOpenData(query) {
+export async function getNYCOpenData(limit, offset, startTimestamp) {
   try {
-    return await aretry(
+    const soda_query = getSodaQueryParams(limit, offset, `received_date>='${startTimestamp}'`, "received_date");
+    const res = await aretry(
       async (_bail) => {
-        const res = await fetch(soda_url + query, {
+        const res = await fetch(soda_url + soda_query, {
           method: "GET",
           headers: { "X-App-Token": soda_appToken, Authorization: soda_auth },
         });
@@ -30,7 +31,10 @@ export async function getNYCOpenData(query) {
       },
       { retries: 3 }
     );
+    if (res?.error || res?.errorCode) throw new Error(res);
+    return res;
   } catch (err) {
     console.error({ getNYCOpenDataError: err });
+    throw err;
   }
 }
