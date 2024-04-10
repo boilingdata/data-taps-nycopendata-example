@@ -29,16 +29,3 @@ source .env && yarn test
 yarn build
 yarn deploy
 ```
-
-## Event
-
-AWS Lambda invoke (event) paramters can be used to select what data to fetch.
-
-```json
-{
-  "startTimestamp": "2024-04-01T00:00:00.00",
-  "limit": 1000,
-  "offset": 0,
-  "maxRecords": 2000
-}
-```
