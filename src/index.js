@@ -55,7 +55,7 @@ async function getNYCOpenData(query) {
 
 async function sendToDataTap(rows) {
   const bd_tapClientToken = Buffer.from(await getValidTapToken()).toString("utf8");
-  await aretry(async (_bail) => {
+  return await aretry(async (_bail) => {
     const res = await fetch(bd_tapTokenUrl, {
       method: "POST",
       headers: {
@@ -68,11 +68,8 @@ async function sendToDataTap(rows) {
   }, getRetryPolicy(3));
 }
 
-async function handler(_event, _context) {
+export default handler = async (_event, _context) => {
   const arr = await getNYCOpenData(soda_query);
   const ndjson = arr.map((r) => JSON.stringify(r)).join("\n");
-  await sendToDataTap(ndjson);
-  console.log(ndjson);
-}
-
-// handler();
+  return await sendToDataTap(ndjson);
+};
