@@ -18,7 +18,10 @@ async function getValidTapToken(fetch = true) {
     return jwtToken;
   } catch (err) {
     // expired or local cached file not exists or corrupted
-    if (!fetch) throw err;
+    if (!fetch) {
+      console.error(err);
+      throw err;
+    }
     const bd_Instance = new BoilingData({ username: bd_username, password: bd_password });
     const bd_tapClientToken = await bd_Instance.getTapClientToken("24h", bd_tapowner);
     await fs.writeFile(TAP_TOKEN_FILE, bd_tapClientToken);
