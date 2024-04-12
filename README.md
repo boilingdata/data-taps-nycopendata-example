@@ -10,7 +10,7 @@ This example illustrates how a scheduled AWS Lambda function can fetch new data 
 
 > **NOTE** The code does not (yet) fetch the new results since last fetch, but the same results.
 
-- You need a Data Tap on your AWS Account. You can follow these instructions: https://github.com/boilingdata/data-taps-template/tree/main/aws_sam_template. Export the Tap URL as `BD_TAP_URL` environment variable.
+- You need a Data Tap on your AWS Account. You can follow these instructions: https://github.com/boilingdata/data-taps-template/tree/main/aws_sam_template. Export the Tap URL as `BD_TAPURL` environment variable.
 - You need [Socrates Data API access](https://data.cityofnewyork.us/profile/edit/developer_settings). This API hosts e.g. the NYC Open Data data sets and many others.
 
 ```shell
