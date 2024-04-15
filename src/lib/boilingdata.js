@@ -34,7 +34,7 @@ export async function sendToDataTap(rows) {
   const token = Buffer.from(await getValidTapToken()).toString("utf8");
   return await aretry(
     async (bail) => {
-      const headers = { "x-bd-authorizatoin": token, "Content-Type": "application/x-ndjson" };
+      const headers = { "x-bd-authorization": token, "Content-Type": "application/x-ndjson" };
       const res = await fetch(bd_tapTokenUrl, { method: "POST", headers, body });
       const jsonRes = await res.json();
       if (jsonRes?.statusCode == 403) bail("Unauthorized");
