@@ -10,10 +10,11 @@ const bd_password = process.env["BD_PASSWORD"];
 const bd_tapTokenUrl = process.env["TAP_URL"];
 const bd_tapowner = bd_username;
 
+let jwtToken, decoded;
 async function getValidTapToken(fetch = true) {
   try {
-    const jwtToken = Buffer.from(await fs.readFile(TAP_TOKEN_FILE)).toString("utf8"); // locally cached
-    const decoded = jwt.decode(jwtToken);
+    jwtToken = jwtToken ?? Buffer.from(await fs.readFile(TAP_TOKEN_FILE)).toString("utf8"); // locally cached
+    decoded = decoded ?? jwt.decode(jwtToken);
     if (decoded.exp * 1000 - 60 * 1000 <= Date.now()) throw new Error("Expired local JWT token");
     return jwtToken;
   } catch (err) {
