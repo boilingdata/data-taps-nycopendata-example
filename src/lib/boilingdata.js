@@ -18,6 +18,8 @@ async function getValidTapToken(fetch = true) {
     if (decoded.exp * 1000 - 60 * 1000 <= Date.now()) throw new Error("Expired local JWT token");
     return jwtToken;
   } catch (err) {
+    jwtToken = undefined;
+    decoded = undefined;
     // expired or local cached file not exists or corrupted
     if (!fetch) {
       console.error(err);
