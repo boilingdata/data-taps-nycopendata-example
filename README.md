@@ -13,8 +13,9 @@ The data is fetched ordered by `received_date`, and the latest record timestamp 
 - You need a Data Tap on your AWS Account. You can follow these instructions: https://github.com/boilingdata/data-taps-template/tree/main/aws_sam_template. Export the Tap URL as `BD_TAPURL` environment variable.
 - You need [Socrates Data API access](https://data.cityofnewyork.us/profile/edit/developer_settings). This API hosts e.g. the NYC Open Data data sets and many others.
 
+Create `.env` file containing your credentials like in the example below.
+
 ```shell
-cat .env
 export BD_TAPURL=deployedDataTapUrl
 export BD_USERNAME=yourBoilingUsername
 export BD_PASSWORD=yourBoilingPassword
@@ -24,8 +25,10 @@ export SODA_APPTOKEN=socrataOpenDataAppToken
 ```
 
 ```shell
-source .env && yarn test
-# The envs will be given as parameters for the stack deployment
+source .env # The envs will be given as parameters for the stack deployment
+yarn test
 yarn build
 yarn deploy
+# ...
+yarn destroy # delete the deployment
 ```

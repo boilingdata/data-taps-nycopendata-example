@@ -8,7 +8,8 @@
   "scripts": {
     "test": "source .env && NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" npx jest",
     "build": "rm -rf dist && esbuild --bundle --minify src/index.js --outfile=dist/index.js --platform=node",
-    "deploy": "source .env || true && sam validate && sam package && sam deploy --no-confirm-changeset --parameter-overrides ParameterKey=bdUsername,ParameterValue=${BD_USERNAME} ParameterKey=bdPassword,ParameterValue=${BD_PASSWORD} ParameterKey=bdTapUrl,ParameterValue=${BD_TAPURL} ParameterKey=nycodApiKey,ParameterValue=${SODA_USERNAME} ParameterKey=nycodApiSecret,ParameterValue=${SODA_PASSWORD} ParameterKey=nycodAppToken,ParameterValue=${SODA_APPTOKEN}"
+    "deploy": "source .env || true && sam validate && sam package && sam deploy --no-confirm-changeset --parameter-overrides ParameterKey=bdUsername,ParameterValue=${BD_USERNAME} ParameterKey=bdPassword,ParameterValue=${BD_PASSWORD} ParameterKey=bdTapUrl,ParameterValue=${BD_TAPURL} ParameterKey=nycodApiKey,ParameterValue=${SODA_USERNAME} ParameterKey=nycodApiSecret,ParameterValue=${SODA_PASSWORD} ParameterKey=nycodAppToken,ParameterValue=${SODA_APPTOKEN}",
+    "destroy": "sam delete"
   },
   "dependencies": {
     "@aws-sdk/client-ssm": "^3.552.0",
