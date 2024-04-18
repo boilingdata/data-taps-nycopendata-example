@@ -7,7 +7,7 @@ import { BoilingData } from "@boilingdata/node-boilingdata";
 const TAP_TOKEN_FILE = ".taptoken"; // fix this
 const bd_username = process.env["BD_USERNAME"];
 const bd_password = process.env["BD_PASSWORD"];
-const bd_tapTokenUrl = process.env["TAP_URL"];
+const bd_tapTokenUrl = process.env["BD_TAPURL"];
 const bd_tapowner = bd_username;
 
 let jwtToken, decoded;
@@ -43,6 +43,6 @@ export async function sendToDataTap(rows) {
       if (jsonRes?.statusCode == 403) bail("Unauthorized");
       return jsonRes;
     },
-    { retries: 5 }
+    { retries: 5, onRetry: (error, attempt) => console.log(`DataTap Retry -- attempt ${attempt}: ${error}`) }
   );
 }

@@ -29,7 +29,7 @@ export async function getNYCOpenData(limit, offset, startTimestamp) {
         });
         return await res.json();
       },
-      { retries: 3 }
+      { retries: 3, onRetry: (err, attempt) => console.log(`SODA Retry -- attempt ${attempt}: ${err}`) }
     );
     if (res?.error || res?.errorCode) {
       console.error(res);

@@ -22,10 +22,10 @@ Parameters:
   nycodAppToken:
     Type: String
     Description: NYC OpenData App Token
-  nycodTrimTimestamp:
-    Type: String
-    Description: NYC OpenData API starting trim horizon timestamp
-    Default: "2024-04-01T00:00:00.00"
+  # nycodTrimTimestamp:
+  #   Type: String
+  #   Description: NYC OpenData API starting trim horizon timestamp
+  #   Default: "2024-04-01T00:00:00.00"
   nycodOffset:
     Type: String
     Description: NYC OpenData API starting offset
@@ -68,6 +68,7 @@ Resources:
           NYCOD_USERNAME: !Ref nycodApiKey
           NYCOD_PASSWORD: !Ref nycodApiSecret
           NYCOD_APPTOKEN: !Ref nycodAppToken
+          #NYCOD_TRIMTS: !Ref nycodTrimTimestamp
       Policies:
         - Statement:
             - Action:
