@@ -4,7 +4,7 @@ import * as fs from "fs/promises";
 import jwt from "jsonwebtoken";
 import { BoilingData } from "@boilingdata/node-boilingdata";
 
-const TAP_TOKEN_FILE = ".taptoken"; // fix this
+const TAP_TOKEN_FILE = process.env["AWS_LAMBDA_FUNCTION_NAME"] != undefined ? "/tmp/.taptoken" : ".taptoken";
 const bd_username = process.env["BD_USERNAME"];
 const bd_password = process.env["BD_PASSWORD"];
 const bd_tapTokenUrl = process.env["BD_TAPURL"];

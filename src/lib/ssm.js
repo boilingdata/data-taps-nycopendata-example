@@ -13,6 +13,6 @@ export async function getSSMParamString(cli, Name) {
 
 export async function putSSMParamString(cli, Name, Value) {
   if (!cli) return;
-  const cmd = new PutParameterCommand({ Name, Value });
+  const cmd = new PutParameterCommand({ Name, Value, Overwrite: true });
   await cli.send(cmd);
 }

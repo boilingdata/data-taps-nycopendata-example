@@ -1,4 +1,4 @@
-import handler from "./index";
+import { handler } from "./index";
 
 describe("handler", () => {
   it("2000 records starting from 2024-04-01", async () => {

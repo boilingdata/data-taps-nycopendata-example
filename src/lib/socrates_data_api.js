@@ -21,6 +21,7 @@ export function getSodaQueryParams(limit = 1000, offset = 0, filter = "", order 
 export async function getNYCOpenData(limit, offset, startTimestamp) {
   try {
     const soda_query = getSodaQueryParams(limit, offset, `received_date>='${startTimestamp}'`, "received_date");
+    console.log({ soda_query });
     const res = await aretry(
       async (_bail) => {
         const res = await fetch(soda_url + soda_query, {

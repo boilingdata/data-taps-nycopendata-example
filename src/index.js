@@ -1,7 +1,8 @@
 import { SSMClient } from "@aws-sdk/client-ssm";
-import { getSSMParamString } from "./lib/ssm";
+import { getSSMParamString, putSSMParamString } from "./lib/ssm";
 import { sendToDataTap } from "./lib/boilingdata";
 import { getNYCOpenData } from "./lib/socrates_data_api";
+import { getLatestTimestampPlusPlus } from "./lib/util";
 
 // Source: REST API (socrates_data_api.js)
 //   Sink: S3 through Data Tap (boilingdata.js)
@@ -16,19 +17,21 @@ const ssmCli = new SSMClient({ region: AWS_REGION });
 
 async function getParams(event) {
   const defTs = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().substring(0, 11) + "00:00:00.00";
-  const def = `{"startTimeStamp":"${defTs}","startOffset":"0"}`;
+  const def = `{"startTimestamp":"${defTs}","startOffset":0,"rounds":0}`;
   const offsetPair = JSON.parse((await getSSMParamString(ssmCli, SSM_OFFSET)) ?? def);
-  const startTimestamp = event?.startTimestamp ?? offsetPair?.startTimestamp ?? def;
-  const maxRecords = event?.maxRecords ?? MAX_RECORDS ?? 5000;
+  const startTimestamp = event?.startTimestamp ?? offsetPair?.startTimestamp ?? defTs;
+  const maxRecords = event?.maxRecords ?? MAX_RECORDS ?? 50_000;
   const limit = event?.limit ?? 1000; // batch size from API
-  const offset = event?.offset ?? offsetPair?.offset ?? "0";
-  return { startTimestamp, offset, limit, maxRecords };
+  const offset = event?.offset ?? offsetPair?.startOffset ?? 0;
+  const rounds = offsetPair?.rounds ?? 0;
+  return { startTimestamp, offset, limit, maxRecords, rounds };
 }
 
 function ensureEnoughTime(limit, context) {
   if (!context || !context?.getRemainingTimeInMillis) return true; // testing, not Lambda
   const remainingMs = context.getRemainingTimeInMillis();
-  return remainingMs < limit;
+  console.log({ remainingMs, limit });
+  return remainingMs > limit;
 }
 
 function looping(batch, context, limit, maxRecords) {
@@ -36,25 +39,30 @@ function looping(batch, context, limit, maxRecords) {
   return Array.isArray(batch) && batch.length >= limit && recordsTotal < maxRecords && ensureEnoughTime(5000, context);
 }
 
-export default handler = async (event, context) => {
+export async function handler(event, context) {
   console.log({ event });
   if (!ensureEnoughTime(30_000, context)) throw new Error("AWS Lambda timeout must be at least 30s");
   let apiBatch = [];
-  let { startTimestamp, limit, offset, maxRecords } = await getParams(event);
+  let { startTimestamp, limit, offset, maxRecords, rounds } = await getParams(event);
   console.log({ startTimestamp, limit, offset, maxRecords });
+  let latestIncrementedTimestamp = startTimestamp;
 
   do {
     apiBatch = await getNYCOpenData(limit, offset, startTimestamp);
     console.log({ receivedApiBatchSize: apiBatch?.length });
+    // console.log(apiBatch);
+    if (apiBatch?.length == 0) break;
     // Spend at least WAIT_TIME_MS here to avoid bombarding the source API too hard
     const [dataTapResponse, _] = await Promise.all([sendToDataTap(apiBatch), sleep(WAIT_TIME_MS)]);
     console.log({ dataTapResponse });
     offset += limit;
+    latestIncrementedTimestamp = getLatestTimestampPlusPlus(apiBatch, "received_date");
   } while (looping(apiBatch, context, limit, maxRecords));
 
-  // TODO: Persist timestamp and offset to AWS Parameter Store with putSSMParamString() once code
-  //       is improved to be able to continue from correct offset again.
-  // TODO: timestamp and offset are a pair, they can't be separated. Also, the timestamp
-  //       should be probably reset to the latest (unique) one and offset set to 0.
+  if (startTimestamp != latestIncrementedTimestamp) {
+    console.log({ message: "Storing lastest inc. ts:", latestIncrementedTimestamp });
+    const val = JSON.stringify({ startTimestamp: latestIncrementedTimestamp, startOffset: 0, rounds: ++rounds });
+    await putSSMParamString(ssmCli, SSM_OFFSET, val);
+  }
   return recordsTotal;
-};
+}

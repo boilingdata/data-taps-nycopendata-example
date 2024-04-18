@@ -22,14 +22,6 @@ Parameters:
   nycodAppToken:
     Type: String
     Description: NYC OpenData App Token
-  # nycodTrimTimestamp:
-  #   Type: String
-  #   Description: NYC OpenData API starting trim horizon timestamp
-  #   Default: "2024-04-01T00:00:00.00"
-  nycodOffset:
-    Type: String
-    Description: NYC OpenData API starting offset
-    Default: "0"
 
 Resources:
   nycOpenDataOffsetParam:
@@ -37,7 +29,7 @@ Resources:
     Properties:
       Type: String
       Name: /datataps/nyc-open-data/offsetPair
-      Value: !Ref nycodOffset
+      Value: "{}"
 
   nycOpenDataLogGroup:
     Type: AWS::Logs::LogGroup
@@ -55,6 +47,10 @@ Resources:
       Runtime: nodejs20.x
       Architectures:
         - arm64
+      ReservedConcurrentExecutions: 1
+      EventInvokeConfig:
+        MaximumEventAgeInSeconds: 60
+        MaximumRetryAttempts: 0
       LoggingConfig:
         ApplicationLogLevel: INFO
         LogFormat: JSON
@@ -62,13 +58,12 @@ Resources:
         SystemLogLevel: INFO
       Environment:
         Variables:
-          TAP_URL: !Ref bdTapUrl
+          BD_TAPURL: !Ref bdTapUrl
           BD_USERNAME: !Ref bdUsername
           BD_PASSWORD: !Ref bdPassword
-          NYCOD_USERNAME: !Ref nycodApiKey
-          NYCOD_PASSWORD: !Ref nycodApiSecret
-          NYCOD_APPTOKEN: !Ref nycodAppToken
-          #NYCOD_TRIMTS: !Ref nycodTrimTimestamp
+          SODA_USERNAME: !Ref nycodApiKey
+          SODA_PASSWORD: !Ref nycodApiSecret
+          SODA_APPTOKEN: !Ref nycodAppToken
       Policies:
         - Statement:
             - Action:
@@ -77,15 +72,14 @@ Resources:
                 - logs:DescribeLogGroups
                 - logs:DescribeLogStreams
               Resource:
-                - '*'
+                - !GetAtt nycOpenDataLogGroup.Arn
               Effect: Allow
             - Action:
                 - ssm:PutParameter*
                 - ssm:GetParameter*
               Resource: 
-                - !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/dev/parameterStoreExample*'
+                - !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/datataps/nyc-open-data/offsetPair*'
               Effect: Allow
-      ReservedConcurrentExecutions: 1
 
   schedulerRule:
     Type: AWS::Events::Rule
