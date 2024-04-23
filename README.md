@@ -1,9 +1,9 @@
 [Collect(d)ion and FluentBit](https://github.com/boilingdata/data-taps-fluentbit-example) | [Web Analytics capture](https://github.com/boilingdata/data-taps-webanalytics-example) | [PostgreSQL CDC](https://github.com/boilingdata/data-taps-postgres-cdc) | [API ingestion](https://github.com/boilingdata/data-taps-socrataOpenData-example)
 
-# NYC OpenData API ingestion to Data Tap Example
+# NYC OpenData API --> Data Tap --> S3 Parquet
 
 <p align="center">
-  <img src="img/nycod-example.png" title="simple architecture">
+  <img src="img/rest-api.png" title="simple architecture">
 </p>
 
 This example illustrates how a scheduled AWS Lambda function can fetch new data since last fetch from an API ([NYC Housing Maintenance Code Complaints and Problems](https://dev.socrata.com/foundry/data.cityofnewyork.us/ygpa-z7cr)) and feed to Data Tap for optimal S3 ingestion and analytics.
